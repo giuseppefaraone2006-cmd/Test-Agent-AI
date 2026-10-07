@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Le mie attività</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; color: #172033; background: #f3f5f9; }
+    * { box-sizing: border-box; }
+    body { max-width: 680px; margin: 48px auto; padding: 0 20px; }
+    main { background: white; padding: 28px; border-radius: 18px; box-shadow: 0 8px 30px #17203312; }
+    h1 { margin-top: 0; }
+    form { display: flex; gap: 8px; }
+    input { flex: 1; min-width: 0; padding: 11px 12px; border: 1px solid #b8c0d0; border-radius: 8px; font: inherit; }
+    button { padding: 10px 14px; border: 0; border-radius: 8px; background: #3157d5; color: white; font: inherit; cursor: pointer; }
+    button:hover { background: #2444b4; }
+    ul { padding: 0; list-style: none; }
+    li { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid #e8ebf1; }
+    li label { flex: 1; overflow-wrap: anywhere; }
+    li.done label { color: #697386; text-decoration: line-through; }
+    .delete { background: #edf0f6; color: #283248; }
+    #empty { color: #697386; }
+    #count { color: #697386; font-size: .92rem; }
+    #filters { display: flex; gap: 8px; margin-top: 18px; }
+    #filters button { background: #edf0f6; color: #283248; }
+    #filters button[aria-pressed="true"] { background: #3157d5; color: white; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Le mie attività</h1>
+    <p>Aggiungi un’attività, poi spuntala quando l’hai completata.</p>
+    <form id="task-form">
+      <input id="task-input" aria-label="Nuova attività" placeholder="Es. preparare la cena" maxlength="120" required>
+      <button type="submit">Aggiungi</button>
+    </form>
+    <nav id="filters" aria-label="Filtra attività">
+      <button type="button" data-filter="all" aria-pressed="true">Tutte</button>
+      <button type="button" data-filter="todo" aria-pressed="false">Da fare</button>
+      <button type="button" data-filter="done" aria-pressed="false">Completate</button>
+    </nav>
+    <p id="count" aria-live="polite"></p>
+    <ul id="task-list"></ul>
+    <p id="empty">Non ci sono ancora attività. Aggiungine una!</p>
+  </main>
+  <script>
+    const form = document.querySelector('#task-form');
+    const input = document.querySelector('#task-input');
+    const list = document.querySelector('#task-list');
+    const empty = document.querySelector('#empty');
+    const count = document.querySelector('#count');
+    const filterButtons = document.querySelectorAll('#filters button');
+    let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    let currentFilter = 'all';
+
+    function save() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      render();
+    }
+
+    function render() {
+      list.replaceChildren();
+      const visibleTasks = tasks
+        .map((task, index) => ({ task, index }))
+        .filter(({ task }) => currentFilter === 'all'
+          || (currentFilter === 'todo' && !task.done)
+          || (currentFilter === 'done' && task.done));
+      visibleTasks.forEach(({ task, index }) => {
+        const item = document.createElement('li');
+        item.className = task.done ? 'done' : '';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = task.done;
+        checkbox.setAttribute('aria-label', `Segna ${task.text} come completata`);
+        checkbox.addEventListener('change', () => {
+          tasks[index].done = checkbox.checked;
+          save();
+        });
+        const label = document.createElement('label');
+        label.textContent = task.text;
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'delete';
+        remove.textContent = 'Elimina';
+        remove.addEventListener('click', () => {
+          tasks.splice(index, 1);
+          save();
+        });
+        item.append(checkbox, label, remove);
+        list.append(item);
+      });
+      empty.hidden = visibleTasks.length > 0 || tasks.length > 0;
+      if (tasks.length > 0 && visibleTasks.length === 0) {
+        empty.textContent = currentFilter === 'todo'
+          ? 'Non ci sono attività da fare.'
+          : 'Non ci sono attività completate.';
+      } else {
+        empty.textContent = 'Non ci sono ancora attività. Aggiungine una!';
+      }
+      const remaining = tasks.filter(task => !task.done).length;
+      count.textContent = `${remaining} ${remaining === 1 ? 'attività da fare' : 'attività da fare'}`;
+    }
+
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        currentFilter = button.dataset.filter;
+        filterButtons.forEach(filterButton => {
+          filterButton.setAttribute('aria-pressed', String(filterButton === button));
+        });
+        render();
+      });
+    });
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      tasks.push({ text, done: false });
+      input.value = '';
+      save();
+      input.focus();
+    });
+
+    render();
+  </script>
+</body>
+</html>
