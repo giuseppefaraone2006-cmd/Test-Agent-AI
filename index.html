@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Le mie attività</title>
+  <title>TASKS LEGA</title>
   <style>
     :root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; color: #172033; background: #f3f5f9; }
     * { box-sizing: border-box; }
@@ -12,26 +12,47 @@
     h1 { margin-top: 0; }
     form { display: flex; gap: 8px; }
     input { flex: 1; min-width: 0; padding: 11px 12px; border: 1px solid #b8c0d0; border-radius: 8px; font: inherit; }
+    #due-input { flex: 0 1 170px; }
     button { padding: 10px 14px; border: 0; border-radius: 8px; background: #3157d5; color: white; font: inherit; cursor: pointer; }
     button:hover { background: #2444b4; }
     ul { padding: 0; list-style: none; }
-    li { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid #e8ebf1; }
-    li label { flex: 1; overflow-wrap: anywhere; }
+    li { display: grid; grid-template-columns: minmax(220px, 1fr) auto; align-items: center; gap: 10px 16px; padding: 14px 0; border-bottom: 1px solid #e8ebf1; }
+    .task-main { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+    .task-main input { flex: none; margin: 4px 0 0; }
+    li label { flex: 1; min-width: 180px; overflow-wrap: anywhere; }
+    .task-meta { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; }
+    .task-actions { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
     li.done label { color: #697386; text-decoration: line-through; }
+    .status { flex: none; padding: 2px 8px; border-radius: 999px; background: #fff3d6; color: #76530a; font-size: .82rem; }
+    li.done .status { background: #e8edf5; color: #4e5a6d; }
+    li.overdue { border-left: 3px solid #d49b35; padding-left: 9px; }
+    .deadline { color: #697386; font-size: .88rem; }
+    li.overdue .deadline { color: #8a5a08; }
     .delete { background: #edf0f6; color: #283248; }
     #empty { color: #697386; }
     #count { color: #697386; font-size: .92rem; }
     #filters { display: flex; gap: 8px; margin-top: 18px; }
     #filters button { background: #edf0f6; color: #283248; }
     #filters button[aria-pressed="true"] { background: #3157d5; color: white; }
+    @media (max-width: 520px) {
+      body { margin: 20px auto; padding: 0 12px; }
+      main { padding: 20px; }
+      form { flex-wrap: wrap; }
+      #task-input { flex: 1 1 100%; }
+      #due-input { flex: 1 1 150px; }
+      li { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+      .task-meta { justify-content: flex-start; padding-left: 30px; }
+      .task-actions { grid-column: 1; justify-content: flex-start; padding-left: 30px; }
+    }
   </style>
 </head>
 <body>
   <main>
-    <h1>Le mie attività</h1>
-    <p>Aggiungi un’attività, poi spuntala quando l’hai completata.</p>
+    <h1>Tasks Lega </h1>
+    <p>Aggiungete tutti quanti i vostri compiti, NON ELIMINATELI perchè li controlliamo insieme il lunedi</p>
     <form id="task-form">
       <input id="task-input" aria-label="Nuova attività" placeholder="Es. preparare la cena" maxlength="120" required>
+      <input id="due-input" type="date" aria-label="Data di scadenza facoltativa">
       <button type="submit">Aggiungi</button>
     </form>
     <nav id="filters" aria-label="Filtra attività">
@@ -46,6 +67,7 @@
   <script>
     const form = document.querySelector('#task-form');
     const input = document.querySelector('#task-input');
+    const dueInput = document.querySelector('#due-input');
     const list = document.querySelector('#task-list');
     const empty = document.querySelector('#empty');
     const count = document.querySelector('#count');
@@ -67,17 +89,32 @@
           || (currentFilter === 'done' && task.done));
       visibleTasks.forEach(({ task, index }) => {
         const item = document.createElement('li');
-        item.className = task.done ? 'done' : '';
+        const today = new Date();
+        const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const overdue = Boolean(task.dueDate && !task.done && task.dueDate < todayIso);
+        item.className = [task.done ? 'done' : '', overdue ? 'overdue' : ''].filter(Boolean).join(' ');
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = task.done;
-        checkbox.setAttribute('aria-label', `Segna ${task.text} come completata`);
+        checkbox.setAttribute('aria-label', task.done
+          ? `Segna ${task.text} come da fare`
+          : `Segna ${task.text} come completata`);
         checkbox.addEventListener('change', () => {
           tasks[index].done = checkbox.checked;
           save();
         });
         const label = document.createElement('label');
         label.textContent = task.text;
+        const status = document.createElement('span');
+        status.className = 'status';
+        status.textContent = task.done ? 'Completata' : 'Da fare';
+        const deadline = document.createElement('span');
+        deadline.className = 'deadline';
+        const formattedDueDate = task.dueDate
+          ? task.dueDate.split('-').reverse().join('/')
+          : 'Nessuna scadenza';
+        deadline.textContent = `Scadenza: ${formattedDueDate}`;
+        deadline.setAttribute('aria-label', `Scadenza: ${formattedDueDate}`);
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'delete';
@@ -86,7 +123,16 @@
           tasks.splice(index, 1);
           save();
         });
-        item.append(checkbox, label, remove);
+        const mainContent = document.createElement('div');
+        mainContent.className = 'task-main';
+        mainContent.append(checkbox, label);
+        const metadata = document.createElement('div');
+        metadata.className = 'task-meta';
+        metadata.append(status, deadline);
+        const actions = document.createElement('div');
+        actions.className = 'task-actions';
+        actions.append(remove);
+        item.append(mainContent, metadata, actions);
         list.append(item);
       });
       empty.hidden = visibleTasks.length > 0 || tasks.length > 0;
@@ -116,7 +162,9 @@
       const text = input.value.trim();
       if (!text) return;
       tasks.push({ text, done: false });
+      tasks[tasks.length - 1].dueDate = dueInput.value || null;
       input.value = '';
+      dueInput.value = '';
       save();
       input.focus();
     });
