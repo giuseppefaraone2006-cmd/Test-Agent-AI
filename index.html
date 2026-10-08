@@ -3,173 +3,358 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TASKS LEGA</title>
+  <meta name="theme-color" content="#f3f5f9">
+  <title>Tasks Lega</title>
   <style>
     :root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; color: #172033; background: #f3f5f9; }
     * { box-sizing: border-box; }
-    body { max-width: 680px; margin: 48px auto; padding: 0 20px; }
-    main { background: white; padding: 28px; border-radius: 18px; box-shadow: 0 8px 30px #17203312; }
-    h1 { margin-top: 0; }
-    form { display: flex; gap: 8px; }
-    input { flex: 1; min-width: 0; padding: 11px 12px; border: 1px solid #b8c0d0; border-radius: 8px; font: inherit; }
-    #due-input { flex: 0 1 170px; }
+    body { max-width: 760px; margin: 42px auto; padding: 0 20px; }
+    main { background: #fff; padding: clamp(20px, 5vw, 32px); border-radius: 18px; box-shadow: 0 8px 30px #17203312; }
+    h1 { margin: 0 0 8px; } p { margin-top: 8px; }
+    input, select { min-width: 0; padding: 11px 12px; border: 1px solid #b8c0d0; border-radius: 8px; font: inherit; background: #fff; color: inherit; }
     button { padding: 10px 14px; border: 0; border-radius: 8px; background: #3157d5; color: white; font: inherit; cursor: pointer; }
-    button:hover { background: #2444b4; }
+    button:hover { background: #2444b4; } button:disabled { opacity: .6; cursor: wait; }
+    .secondary, .delete { background: #edf0f6; color: #283248; }
+    .stack { display: grid; gap: 12px; }
+    #auth-card { max-width: 480px; margin: 24px auto 0; }
+    #auth-form { display: grid; gap: 10px; }
+    #auth-form input { width: 100%; }
+    #app-panel[hidden], #auth-card[hidden], [hidden] { display: none !important; }
+    #user-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #e8ebf1; padding-bottom: 14px; margin-bottom: 14px; }
+    #user-email { color: #697386; overflow-wrap: anywhere; }
+    #task-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    #task-input { flex: 1 1 220px; } #operator-input { flex: 0 1 180px; } #due-input { flex: 0 1 170px; }
     ul { padding: 0; list-style: none; }
-    li { display: grid; grid-template-columns: minmax(220px, 1fr) auto; align-items: center; gap: 10px 16px; padding: 14px 0; border-bottom: 1px solid #e8ebf1; }
+    li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 16px; padding: 14px 0; border-bottom: 1px solid #e8ebf1; }
     .task-main { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
-    .task-main input { flex: none; margin: 4px 0 0; }
-    li label { flex: 1; min-width: 180px; overflow-wrap: anywhere; }
+    .task-main input { flex: none; margin: 4px 0 0; padding: 0; }
+    li label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
     .task-meta { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; }
-    .task-actions { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+    .task-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
     li.done label { color: #697386; text-decoration: line-through; }
     .status { flex: none; padding: 2px 8px; border-radius: 999px; background: #fff3d6; color: #76530a; font-size: .82rem; }
     li.done .status { background: #e8edf5; color: #4e5a6d; }
     li.overdue { border-left: 3px solid #d49b35; padding-left: 9px; }
-    .deadline { color: #697386; font-size: .88rem; }
+    .deadline, .muted { color: #697386; font-size: .9rem; }
     li.overdue .deadline { color: #8a5a08; }
-    .delete { background: #edf0f6; color: #283248; }
-    #empty { color: #697386; }
-    #count { color: #697386; font-size: .92rem; }
-    #filters { display: flex; gap: 8px; margin-top: 18px; }
+    #filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
     #filters button { background: #edf0f6; color: #283248; }
     #filters button[aria-pressed="true"] { background: #3157d5; color: white; }
+    #notice { padding: 10px 12px; border-radius: 8px; background: #eef3ff; color: #243b79; overflow-wrap: anywhere; }
+    #notice[data-kind="error"] { background: #fff0ef; color: #8c2820; }
+    #notice[data-kind="success"] { background: #ecf8ef; color: #225e31; }
+    #count { color: #697386; font-size: .92rem; }
     @media (max-width: 520px) {
-      body { margin: 20px auto; padding: 0 12px; }
-      main { padding: 20px; }
-      form { flex-wrap: wrap; }
-      #task-input { flex: 1 1 100%; }
-      #due-input { flex: 1 1 150px; }
+      body { margin: 16px auto; padding: 0 12px; }
       li { grid-template-columns: minmax(0, 1fr); gap: 10px; }
       .task-meta { justify-content: flex-start; padding-left: 30px; }
       .task-actions { grid-column: 1; justify-content: flex-start; padding-left: 30px; }
+      #task-form > * { flex: 1 1 100%; }
     }
   </style>
 </head>
 <body>
   <main>
-    <h1>Tasks Lega </h1>
-    <p>Aggiungete tutti quanti i vostri compiti, NON ELIMINATELI perchè li controlliamo insieme il lunedi</p>
-    <form id="task-form">
-      <input id="task-input" aria-label="Nuova attività" placeholder="Es. preparare la cena" maxlength="120" required>
-      <input id="due-input" type="date" aria-label="Data di scadenza facoltativa">
-      <button type="submit">Aggiungi</button>
-    </form>
-    <nav id="filters" aria-label="Filtra attività">
-      <button type="button" data-filter="all" aria-pressed="true">Tutte</button>
-      <button type="button" data-filter="todo" aria-pressed="false">Da fare</button>
-      <button type="button" data-filter="done" aria-pressed="false">Completate</button>
-    </nav>
-    <p id="count" aria-live="polite"></p>
-    <ul id="task-list"></ul>
-    <p id="empty">Non ci sono ancora attività. Aggiungine una!</p>
+    <h1>Tasks Lega</h1>
+    <p>Aggiungete tutti quanti i vostri compiti: li controlliamo insieme il lunedì.</p>
+
+    <section id="setup-card" class="stack" hidden>
+      <p id="setup-message" role="alert"></p>
+      <p class="muted">Apri <code>index.html</code> e inserisci URL e publishable key del tuo progetto Supabase nei campi indicati all’inizio dello script. Non inserire una secret key o service role key.</p>
+    </section>
+
+    <section id="auth-card" class="stack" hidden>
+      <h2 id="auth-title">Accedi</h2>
+      <p class="muted">Accedi con la stessa email su ogni dispositivo per vedere la stessa lista.</p>
+      <form id="auth-form">
+        <label for="email-input">Email</label>
+        <input id="email-input" type="email" autocomplete="email" required>
+        <label for="password-input">Password</label>
+        <input id="password-input" type="password" autocomplete="current-password" minlength="6" required>
+        <button id="auth-submit" type="submit">Accedi</button>
+      </form>
+      <button id="auth-mode" class="secondary" type="button">Crea un account</button>
+    </section>
+
+    <section id="app-panel" hidden>
+      <div id="user-bar"><span id="user-email"></span><button id="sign-out" class="secondary" type="button">Esci</button></div>
+      <div id="import-panel" class="stack" hidden>
+        <p>Ho trovato attività salvate su questo dispositivo. Vuoi importarle nel tuo account Supabase?</p>
+        <div><button id="import-button" type="button">Importa attività</button> <button id="skip-import" class="secondary" type="button">Non ora</button></div>
+      </div>
+      <form id="task-form">
+        <input id="task-input" aria-label="Nuova attività" placeholder="Es. preparare la cena" maxlength="120" required>
+        <select id="operator-input" aria-label="Operatore" required>
+          <option value="" disabled selected>Seleziona operatore</option>
+          <option>DAVIDE</option><option>MARCO</option><option>PASQUALE</option>
+          <option>PEPPE S.</option><option>PEPPE F.</option><option>ALE</option>
+        </select>
+        <input id="due-input" type="date" aria-label="Data di scadenza facoltativa">
+        <button type="submit">Aggiungi</button>
+      </form>
+      <nav id="filters" aria-label="Filtra attività">
+        <button type="button" data-filter="all" aria-pressed="true">Tutte</button>
+        <button type="button" data-filter="todo" aria-pressed="false">Da fare</button>
+        <button type="button" data-filter="done" aria-pressed="false">Completate</button>
+      </nav>
+      <p id="count" aria-live="polite"></p>
+      <ul id="task-list"></ul>
+      <p id="empty" class="muted" hidden></p>
+    </section>
+    <p id="notice" role="status" aria-live="polite" hidden></p>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // Inserisci qui l'URL del progetto e la publishable key (sb_publishable_...).
+    // Sono valori pubblici: la sicurezza dei dati è applicata dalle policy RLS del database.
+    const SUPABASE_URL = 'https://bpwyamowagijlwkzuchn.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_zfzvXd1MaTUyEBmev4META_00OL41Tl';
+
+    const setupCard = document.querySelector('#setup-card');
+    const setupMessage = document.querySelector('#setup-message');
+    const authCard = document.querySelector('#auth-card');
+    const authForm = document.querySelector('#auth-form');
+    const authTitle = document.querySelector('#auth-title');
+    const authSubmit = document.querySelector('#auth-submit');
+    const authMode = document.querySelector('#auth-mode');
+    const emailInput = document.querySelector('#email-input');
+    const passwordInput = document.querySelector('#password-input');
+    const appPanel = document.querySelector('#app-panel');
+    const userEmail = document.querySelector('#user-email');
+    const notice = document.querySelector('#notice');
+    const importPanel = document.querySelector('#import-panel');
+    const importButton = document.querySelector('#import-button');
+    const skipImport = document.querySelector('#skip-import');
     const form = document.querySelector('#task-form');
     const input = document.querySelector('#task-input');
+    const operatorInput = document.querySelector('#operator-input');
     const dueInput = document.querySelector('#due-input');
     const list = document.querySelector('#task-list');
     const empty = document.querySelector('#empty');
     const count = document.querySelector('#count');
     const filterButtons = document.querySelectorAll('#filters button');
-    let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    let supabaseClient = null;
+    let currentUser = null;
+    let tasks = [];
     let currentFilter = 'all';
+    let isRegisterMode = false;
+    let busy = false;
+    const OPERATORS = ['DAVIDE', 'MARCO', 'PASQUALE', 'PEPPE S.', 'PEPPE F.', 'ALE'];
 
-    function save() {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
+    function setNotice(message = '', kind = 'info') {
+      notice.textContent = message;
+      notice.dataset.kind = kind;
+      notice.hidden = !message;
+    }
+    function setBusy(value) {
+      busy = value;
+      document.querySelectorAll('button, input, select').forEach(control => { control.disabled = value; });
+    }
+    function showSignedOut() {
+      currentUser = null;
+      tasks = [];
+      appPanel.hidden = true;
+      authCard.hidden = false;
       render();
     }
-
+    function showSignedIn(user) {
+      currentUser = user;
+      authCard.hidden = true;
+      appPanel.hidden = false;
+      userEmail.textContent = user.email || 'Account autenticato';
+    }
+    function localTasks() {
+      try {
+        const stored = JSON.parse(localStorage.getItem('tasks') || '[]');
+        return Array.isArray(stored) ? stored.filter(task => task && typeof task.text === 'string' && task.text.trim()) : [];
+      } catch (error) {
+        return [];
+      }
+    }
+    function importMarker(userId) { return `tasks-imported:${userId}`; }
+    function importPendingMarker(userId) { return `tasks-import-pending:${userId}`; }
+    function updateImportPrompt() {
+      const hasMarker = currentUser && localStorage.getItem(importMarker(currentUser.id)) === 'true';
+      const hasLocal = localTasks().length > 0;
+      importPanel.hidden = !currentUser || hasMarker || !hasLocal;
+    }
     function render() {
       list.replaceChildren();
-      const visibleTasks = tasks
-        .map((task, index) => ({ task, index }))
-        .filter(({ task }) => currentFilter === 'all'
-          || (currentFilter === 'todo' && !task.done)
-          || (currentFilter === 'done' && task.done));
-      visibleTasks.forEach(({ task, index }) => {
+      const visibleTasks = tasks.filter(task => currentFilter === 'all'
+        || (currentFilter === 'todo' && !task.done)
+        || (currentFilter === 'done' && task.done));
+      visibleTasks.forEach(task => {
         const item = document.createElement('li');
-        const today = new Date();
-        const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const overdue = Boolean(task.dueDate && !task.done && task.dueDate < todayIso);
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const overdue = Boolean(task.due_date && !task.done && task.due_date < today);
         item.className = [task.done ? 'done' : '', overdue ? 'overdue' : ''].filter(Boolean).join(' ');
         const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = task.done;
-        checkbox.setAttribute('aria-label', task.done
-          ? `Segna ${task.text} come da fare`
-          : `Segna ${task.text} come completata`);
-        checkbox.addEventListener('change', () => {
-          tasks[index].done = checkbox.checked;
-          save();
-        });
-        const label = document.createElement('label');
-        label.textContent = task.text;
-        const status = document.createElement('span');
-        status.className = 'status';
-        status.textContent = task.done ? 'Completata' : 'Da fare';
-        const deadline = document.createElement('span');
-        deadline.className = 'deadline';
-        const formattedDueDate = task.dueDate
-          ? task.dueDate.split('-').reverse().join('/')
-          : 'Nessuna scadenza';
-        deadline.textContent = `Scadenza: ${formattedDueDate}`;
-        deadline.setAttribute('aria-label', `Scadenza: ${formattedDueDate}`);
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'delete';
-        remove.textContent = 'Elimina';
-        remove.addEventListener('click', () => {
-          tasks.splice(index, 1);
-          save();
-        });
-        const mainContent = document.createElement('div');
-        mainContent.className = 'task-main';
-        mainContent.append(checkbox, label);
-        const metadata = document.createElement('div');
-        metadata.className = 'task-meta';
-        metadata.append(status, deadline);
-        const actions = document.createElement('div');
-        actions.className = 'task-actions';
-        actions.append(remove);
-        item.append(mainContent, metadata, actions);
-        list.append(item);
+        checkbox.type = 'checkbox'; checkbox.checked = task.done;
+        checkbox.setAttribute('aria-label', task.done ? `Segna ${task.text} come da fare` : `Segna ${task.text} come completata`);
+        checkbox.addEventListener('change', () => updateTask(task.id, { done: checkbox.checked }));
+        const label = document.createElement('label'); label.textContent = task.text;
+        const status = document.createElement('span'); status.className = 'status'; status.textContent = task.done ? 'Completata' : 'Da fare';
+        const operatorSelect = document.createElement('select');
+        operatorSelect.setAttribute('aria-label', `Operatore per ${task.text}`);
+        if (!task.assigned_operator) operatorSelect.add(new Option('Non assegnato', ''));
+        OPERATORS.forEach(operator => operatorSelect.add(new Option(operator, operator)));
+        operatorSelect.value = task.assigned_operator || '';
+        operatorSelect.addEventListener('change', () => updateTask(task.id, { assigned_operator: operatorSelect.value || null }));
+        const deadline = document.createElement('span'); deadline.className = 'deadline';
+        const formatted = task.due_date ? task.due_date.split('-').reverse().join('/') : 'Nessuna scadenza';
+        deadline.textContent = `Scadenza: ${formatted}`;
+        const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'delete'; remove.textContent = 'Elimina';
+        remove.addEventListener('click', () => deleteTask(task.id));
+        const main = document.createElement('div'); main.className = 'task-main'; main.append(checkbox, label);
+        const meta = document.createElement('div'); meta.className = 'task-meta'; meta.append(status, operatorSelect, deadline);
+        const actions = document.createElement('div'); actions.className = 'task-actions'; actions.append(remove);
+        item.append(main, meta, actions); list.append(item);
       });
-      empty.hidden = visibleTasks.length > 0 || tasks.length > 0;
-      if (tasks.length > 0 && visibleTasks.length === 0) {
-        empty.textContent = currentFilter === 'todo'
-          ? 'Non ci sono attività da fare.'
-          : 'Non ci sono attività completate.';
-      } else {
-        empty.textContent = 'Non ci sono ancora attività. Aggiungine una!';
+      empty.hidden = visibleTasks.length > 0;
+      if (visibleTasks.length === 0) {
+        empty.textContent = tasks.length === 0 ? 'Non ci sono ancora attività. Aggiungine una!' : (currentFilter === 'todo' ? 'Non ci sono attività da fare.' : 'Non ci sono attività completate.');
       }
       const remaining = tasks.filter(task => !task.done).length;
       count.textContent = `${remaining} ${remaining === 1 ? 'attività da fare' : 'attività da fare'}`;
     }
+    async function loadTasks() {
+      if (!currentUser) return;
+      setBusy(true); setNotice('Caricamento delle attività…');
+      try {
+        const { data, error } = await supabaseClient.from('tasks').select('id, text, done, due_date, assigned_operator, created_at').order('created_at', { ascending: false });
+        if (error) throw error;
+        tasks = data || [];
+        render(); updateImportPrompt(); setNotice('');
+      } catch (error) {
+        setNotice(`Impossibile caricare le attività: ${error.message || 'controlla la connessione e le policy RLS.'}`, 'error');
+      } finally { setBusy(false); }
+    }
+    async function addTask(text, dueDate) {
+      if (!currentUser) return;
+      setBusy(true); setNotice('Salvataggio…');
+      try {
+        const { error } = await supabaseClient.from('tasks').insert({ user_id: currentUser.id, text, done: false, due_date: dueDate || null, assigned_operator: operatorInput.value });
+        if (error) throw error;
+        form.reset(); await loadTasks(); input.focus();
+      } catch (error) { setNotice(`Attività non salvata: ${error.message}`, 'error'); }
+      finally { setBusy(false); }
+    }
+    async function updateTask(id, changes) {
+      if (!currentUser) return;
+      setBusy(true); setNotice('Aggiornamento…');
+      try {
+        const { data, error } = await supabaseClient.from('tasks').update(changes).eq('id', id).select('id').maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('Attività non trovata o non accessibile.');
+        await loadTasks();
+      } catch (error) { setNotice(`Modifica non salvata: ${error.message}`, 'error'); await loadTasks(); }
+      finally { setBusy(false); }
+    }
+    async function deleteTask(id) {
+      if (!currentUser) return;
+      setBusy(true); setNotice('Eliminazione…');
+      try {
+        const { data, error } = await supabaseClient.from('tasks').delete().eq('id', id).select('id').maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('Attività non trovata o non accessibile.');
+        await loadTasks();
+      } catch (error) { setNotice(`Eliminazione non riuscita: ${error.message}`, 'error'); await loadTasks(); }
+      finally { setBusy(false); }
+    }
+    async function importLocalTasks() {
+      if (!currentUser || localStorage.getItem(importMarker(currentUser.id)) === 'true') return;
+      const pendingKey = importPendingMarker(currentUser.id);
+      let pending = null;
+      try { pending = JSON.parse(localStorage.getItem(pendingKey) || 'null'); } catch (error) { pending = null; }
+      if (!pending) {
+        const local = localTasks();
+        if (!local.length) { setNotice('Non ci sono attività locali da importare.'); return; }
+        pending = { payload: local.map(task => ({ id: crypto.randomUUID(), user_id: currentUser.id, text: task.text.trim().slice(0, 120), done: Boolean(task.done), due_date: task.dueDate || null, assigned_operator: null })) };
+        localStorage.setItem(pendingKey, JSON.stringify(pending));
+      }
+      const payload = pending.payload;
+      if (!Array.isArray(payload) || !payload.length) { localStorage.removeItem(pendingKey); setNotice('Importazione locale non valida. I dati originali restano conservati.', 'error'); return; }
+      setBusy(true); setNotice(`Importazione di ${payload.length} attività…`);
+      try {
+        // Gli ID salvati localmente rendono sicuro ripetere l'operazione dopo un errore di rete.
+        const { error } = await supabaseClient.from('tasks').upsert(payload, { onConflict: 'id', ignoreDuplicates: true });
+        if (error) throw error;
+        const ids = payload.map(row => row.id);
+        const { data: verified, error: verifyError } = await supabaseClient.from('tasks').select('id').in('id', ids);
+        if (verifyError) throw verifyError;
+        if (!verified || verified.length !== payload.length) throw new Error('La verifica online non è riuscita. I dati locali sono stati conservati.');
+        localStorage.setItem(importMarker(currentUser.id), 'true');
+        localStorage.removeItem(pendingKey);
+        importPanel.hidden = true; setNotice(`${verified.length} attività importate e verificate online. I dati locali restano conservati su questo dispositivo.`, 'success');
+        await loadTasks();
+      } catch (error) { setNotice(`Importazione non completata: ${error.message}. I dati locali sono stati conservati; puoi riprovare.`, 'error'); }
+      finally { setBusy(false); }
+    }
 
-    filterButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        currentFilter = button.dataset.filter;
-        filterButtons.forEach(filterButton => {
-          filterButton.setAttribute('aria-pressed', String(filterButton === button));
-        });
-        render();
-      });
-    });
-
+    filterButtons.forEach(button => button.addEventListener('click', () => {
+      currentFilter = button.dataset.filter;
+      filterButtons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      render();
+    }));
     form.addEventListener('submit', event => {
-      event.preventDefault();
-      const text = input.value.trim();
-      if (!text) return;
-      tasks.push({ text, done: false });
-      tasks[tasks.length - 1].dueDate = dueInput.value || null;
-      input.value = '';
-      dueInput.value = '';
-      save();
-      input.focus();
+      event.preventDefault(); const text = input.value.trim(); if (text) addTask(text, dueInput.value);
     });
+    authMode.addEventListener('click', () => {
+      isRegisterMode = !isRegisterMode;
+      authTitle.textContent = isRegisterMode ? 'Crea un account' : 'Accedi';
+      authSubmit.textContent = isRegisterMode ? 'Registrati' : 'Accedi';
+      authMode.textContent = isRegisterMode ? 'Ho già un account' : 'Crea un account';
+      passwordInput.autocomplete = isRegisterMode ? 'new-password' : 'current-password';
+      setNotice('');
+    });
+    authForm.addEventListener('submit', async event => {
+      event.preventDefault(); if (!supabaseClient) return;
+      setBusy(true); setNotice(isRegisterMode ? 'Creazione account…' : 'Accesso…');
+      try {
+        const credentials = { email: emailInput.value.trim(), password: passwordInput.value };
+        const result = isRegisterMode ? await supabaseClient.auth.signUp(credentials) : await supabaseClient.auth.signInWithPassword(credentials);
+        if (result.error) throw result.error;
+        if (isRegisterMode && !result.data.session) {
+          setNotice('Account creato. Controlla la tua email per confermare l’indirizzo, poi accedi.', 'success');
+        } else if (result.data.user) {
+          showSignedIn(result.data.user); await loadTasks();
+        }
+      } catch (error) { setNotice(`Accesso non riuscito: ${error.message}`, 'error'); }
+      finally { setBusy(false); }
+    });
+    document.querySelector('#sign-out').addEventListener('click', async () => {
+      setBusy(true);
+      try { const { error } = await supabaseClient.auth.signOut(); if (error) throw error; showSignedOut(); setNotice('Hai effettuato la disconnessione.'); }
+      catch (error) { setNotice(`Disconnessione non riuscita: ${error.message}`, 'error'); }
+      finally { setBusy(false); }
+    });
+    importButton.addEventListener('click', importLocalTasks);
+    skipImport.addEventListener('click', () => { importPanel.hidden = true; setNotice('Importazione rimandata: potrai ricaricare la pagina per visualizzare di nuovo la proposta.'); });
 
-    render();
+    if (SUPABASE_URL.startsWith('INSERISCI_') || SUPABASE_PUBLISHABLE_KEY.startsWith('INSERISCI_')) {
+      setupCard.hidden = false; setupMessage.textContent = 'Configurazione Supabase mancante: inserisci i valori del tuo progetto per attivare accesso e sincronizzazione.';
+      authCard.hidden = true;
+    } else if (!window.supabase?.createClient) {
+      setupCard.hidden = false; setupMessage.textContent = 'Non riesco a caricare la libreria Supabase. Controlla la connessione e ricarica la pagina.';
+      authCard.hidden = true;
+    } else {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+      supabaseClient.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) { showSignedIn(session.user); queueMicrotask(loadTasks); }
+        else showSignedOut();
+      });
+      supabaseClient.auth.getSession().then(({ data, error }) => {
+        if (error) { setNotice(`Verifica sessione non riuscita: ${error.message}`, 'error'); showSignedOut(); return; }
+        if (data.session?.user) { showSignedIn(data.session.user); loadTasks(); }
+        else showSignedOut();
+      });
+    }
   </script>
 </body>
 </html>
+
+
+
+
