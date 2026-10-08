@@ -4,13 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f3f5f9">
-  <title>Tasks Lega</title>
+  <title>Lega Sanninica | Gestione attività</title>
   <style>
     :root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; color: #172033; background: #f3f5f9; }
     * { box-sizing: border-box; }
     body { max-width: 760px; margin: 42px auto; padding: 0 20px; }
     main { background: #fff; padding: clamp(20px, 5vw, 32px); border-radius: 18px; box-shadow: 0 8px 30px #17203312; }
-    h1 { margin: 0 0 8px; } p { margin-top: 8px; }
+    .brand-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .brand-logo-slot { position: relative; width: 82px; height: 82px; flex: 0 0 82px; overflow: hidden; border: 1px dashed #aeb8cb; border-radius: 14px; background: #f7f8fb; color: #697386; font-size: .8rem; font-weight: 700; }
+    .brand-logo-slot img, .brand-logo-slot span { position: absolute; inset: 0; margin: auto; }
+    .brand-logo-slot img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%; }
+    .brand-logo-slot span { display: grid; place-items: center; }
+    .brand-kicker { margin: 0 0 2px; color: #3157d5; font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    h1 { margin: 0 0 4px; } .brand-copy p:last-child { margin: 0; color: #697386; }
+    p { margin-top: 8px; }
     input, select { min-width: 0; padding: 11px 12px; border: 1px solid #b8c0d0; border-radius: 8px; font: inherit; background: #fff; color: inherit; }
     button { padding: 10px 14px; border: 0; border-radius: 8px; background: #3157d5; color: white; font: inherit; cursor: pointer; }
     button:hover { background: #2444b4; } button:disabled { opacity: .6; cursor: wait; }
@@ -31,7 +38,20 @@
     li label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
     .task-meta { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; }
     .task-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+    .comments-toggle { background: #edf0f6; color: #283248; }
+    .task-comments { grid-column: 1 / -1; min-width: 0; padding: 12px; border-radius: 10px; background: #f7f8fb; }
+    .comments-list { display: grid; gap: 10px; margin: 10px 0; }
+    .comment { padding: 10px; border: 1px solid #e3e7ef; border-radius: 8px; background: #fff; overflow-wrap: anywhere; }
+    .comment-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; margin-bottom: 4px; }
+    .comment-author { font-weight: 700; }
+    .comment-time { color: #697386; font-size: .85rem; }
+    .comment-body { margin: 0; white-space: pre-wrap; }
+    .comment-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+    .comment-form textarea { min-width: 0; resize: vertical; padding: 10px 12px; border: 1px solid #b8c0d0; border-radius: 8px; font: inherit; }
+    .comment-message { margin: 8px 0; }
+    .comment-message[data-kind="error"] { color: #8c2820; }
     li.done label { color: #697386; text-decoration: line-through; }
+    .operator { flex: none; color: #283248; font-weight: 600; }
     .status { flex: none; padding: 2px 8px; border-radius: 999px; background: #fff3d6; color: #76530a; font-size: .82rem; }
     li.done .status { background: #e8edf5; color: #4e5a6d; }
     li.overdue { border-left: 3px solid #d49b35; padding-left: 9px; }
@@ -50,13 +70,25 @@
       .task-meta { justify-content: flex-start; padding-left: 30px; }
       .task-actions { grid-column: 1; justify-content: flex-start; padding-left: 30px; }
       #task-form > * { flex: 1 1 100%; }
+      .comment-form { grid-template-columns: minmax(0, 1fr); }
+      .comment-form button { width: 100%; }
     }
   </style>
 </head>
 <body>
   <main>
-    <h1>Tasks Lega</h1>
-    <p>Aggiungete tutti quanti i vostri compiti: li controlliamo insieme il lunedì.</p>
+    <header class="brand-header">
+      <div class="brand-logo-slot">
+        <!-- Sostituisci src con il percorso del logo che aggiungerai al repository. -->
+        <img id="league-logo" src="images/LOGO LEGA PANTALONCINI.jpg" alt="Logo Lega Sanninica">
+        <span hidden>LOGO</span>
+      </div>
+      <div class="brand-copy">
+        <p class="brand-kicker">Gestionale ufficiale</p>
+        <h1>Lega Sanninica</h1>
+        <p>Attività e impegni condivisi della squadra.</p>
+      </div>
+    </header>
 
     <section id="setup-card" class="stack" hidden>
       <p id="setup-message" role="alert"></p>
@@ -87,7 +119,7 @@
         <select id="operator-input" aria-label="Operatore" required>
           <option value="" disabled selected>Seleziona operatore</option>
           <option>DAVIDE</option><option>MARCO</option><option>PASQUALE</option>
-          <option>PEPPE S.</option><option>PEPPE F.</option><option>ALE</option>
+          <option>PEPPE S.</option><option>PEPPE F.</option><option>ALE</option><option>DANIELE S.</option>
         </select>
         <input id="due-input" type="date" aria-label="Data di scadenza facoltativa">
         <button type="submit">Aggiungi</button>
@@ -134,13 +166,28 @@
     const empty = document.querySelector('#empty');
     const count = document.querySelector('#count');
     const filterButtons = document.querySelectorAll('#filters button');
+    const leagueLogo = document.querySelector('#league-logo');
+    const leagueLogoFallback = leagueLogo.nextElementSibling;
+    leagueLogo.addEventListener('error', () => {
+      leagueLogo.hidden = true;
+      leagueLogoFallback.hidden = false;
+    });
+    if (leagueLogo.complete && leagueLogo.naturalWidth === 0) {
+      leagueLogo.hidden = true;
+      leagueLogoFallback.hidden = false;
+    }
     let supabaseClient = null;
     let currentUser = null;
     let tasks = [];
+    let taskComments = new Map();
+    let openCommentTasks = new Set();
+    let loadingComments = new Set();
+    let commentErrors = new Map();
+    let submittingComments = new Set();
     let currentFilter = 'all';
     let isRegisterMode = false;
     let busy = false;
-    const OPERATORS = ['DAVIDE', 'MARCO', 'PASQUALE', 'PEPPE S.', 'PEPPE F.', 'ALE'];
+    const OPERATORS = ['DAVIDE', 'MARCO', 'PASQUALE', 'PEPPE S.', 'PEPPE F.', 'ALE', 'DANIELE S.'];
 
     function setNotice(message = '', kind = 'info') {
       notice.textContent = message;
@@ -154,6 +201,11 @@
     function showSignedOut() {
       currentUser = null;
       tasks = [];
+      taskComments = new Map();
+      openCommentTasks = new Set();
+      loadingComments = new Set();
+      commentErrors = new Map();
+      submittingComments = new Set();
       appPanel.hidden = true;
       authCard.hidden = false;
       render();
@@ -196,21 +248,39 @@
         checkbox.addEventListener('change', () => updateTask(task.id, { done: checkbox.checked }));
         const label = document.createElement('label'); label.textContent = task.text;
         const status = document.createElement('span'); status.className = 'status'; status.textContent = task.done ? 'Completata' : 'Da fare';
-        const operatorSelect = document.createElement('select');
-        operatorSelect.setAttribute('aria-label', `Operatore per ${task.text}`);
-        if (!task.assigned_operator) operatorSelect.add(new Option('Non assegnato', ''));
-        OPERATORS.forEach(operator => operatorSelect.add(new Option(operator, operator)));
-        operatorSelect.value = task.assigned_operator || '';
-        operatorSelect.addEventListener('change', () => updateTask(task.id, { assigned_operator: operatorSelect.value || null }));
+        let operatorControl;
+        if (task.assigned_operator) {
+          operatorControl = document.createElement('span');
+          operatorControl.className = 'operator';
+          operatorControl.textContent = task.assigned_operator;
+        } else {
+          operatorControl = document.createElement('select');
+          operatorControl.setAttribute('aria-label', 'Assegna un operatore a ' + task.text);
+          operatorControl.add(new Option('Non assegnato', ''));
+          OPERATORS.forEach(operator => operatorControl.add(new Option(operator, operator)));
+          operatorControl.addEventListener('change', () => {
+            if (operatorControl.value) updateTask(task.id, { assigned_operator: operatorControl.value });
+          });
+        }
         const deadline = document.createElement('span'); deadline.className = 'deadline';
         const formatted = task.due_date ? task.due_date.split('-').reverse().join('/') : 'Nessuna scadenza';
         deadline.textContent = `Scadenza: ${formatted}`;
         const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'delete'; remove.textContent = 'Elimina';
         remove.addEventListener('click', () => deleteTask(task.id));
         const main = document.createElement('div'); main.className = 'task-main'; main.append(checkbox, label);
-        const meta = document.createElement('div'); meta.className = 'task-meta'; meta.append(status, operatorSelect, deadline);
+        const meta = document.createElement('div'); meta.className = 'task-meta'; meta.append(status, operatorControl, deadline);
         const actions = document.createElement('div'); actions.className = 'task-actions'; actions.append(remove);
-        item.append(main, meta, actions); list.append(item);
+        const commentsButton = document.createElement('button');
+        commentsButton.type = 'button'; commentsButton.className = 'comments-toggle';
+        commentsButton.textContent = openCommentTasks.has(task.id) ? 'Nascondi commenti' : 'Commenti';
+        commentsButton.setAttribute('aria-expanded', String(openCommentTasks.has(task.id)));
+        commentsButton.addEventListener('click', () => toggleTaskComments(task.id));
+        const commentsPanel = document.createElement('section');
+        commentsPanel.className = 'task-comments';
+        commentsPanel.setAttribute('aria-label', `Commenti per ${task.text}`);
+        commentsPanel.hidden = !openCommentTasks.has(task.id);
+        if (!commentsPanel.hidden) renderTaskComments(task, commentsPanel);
+        item.append(main, meta, actions, commentsButton, commentsPanel); list.append(item);
       });
       empty.hidden = visibleTasks.length > 0;
       if (visibleTasks.length === 0) {
@@ -230,6 +300,102 @@
       } catch (error) {
         setNotice(`Impossibile caricare le attività: ${error.message || 'controlla la connessione e le policy RLS.'}`, 'error');
       } finally { setBusy(false); }
+    }
+    function renderTaskComments(task, panel) {
+      panel.replaceChildren();
+      const comments = taskComments.get(task.id);
+      const error = commentErrors.get(task.id);
+      if (loadingComments.has(task.id)) {
+        const loading = document.createElement('p'); loading.className = 'muted comment-message';
+        loading.textContent = 'Caricamento commenti…'; panel.append(loading);
+      } else if (error && !comments) {
+        const message = document.createElement('p'); message.className = 'comment-message';
+        message.dataset.kind = 'error'; message.setAttribute('role', 'alert'); message.textContent = error;
+        const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'secondary';
+        retry.textContent = 'Riprova'; retry.addEventListener('click', () => loadTaskComments(task.id));
+        panel.append(message, retry);
+      } else if (comments) {
+        if (comments.length === 0) {
+          const emptyComments = document.createElement('p'); emptyComments.className = 'muted';
+          emptyComments.textContent = 'Nessun commento. Avvia la conversazione.'; panel.append(emptyComments);
+        } else {
+          const commentList = document.createElement('ul'); commentList.className = 'comments-list';
+          comments.forEach(comment => {
+            const row = document.createElement('li'); row.className = 'comment';
+            const heading = document.createElement('div'); heading.className = 'comment-heading';
+            const author = document.createElement('span'); author.className = 'comment-author';
+            author.textContent = comment.user_id === currentUser?.id ? 'Tu' : `Utente ${comment.user_id.slice(0, 8)}`;
+            const timestamp = document.createElement('time'); timestamp.className = 'comment-time';
+            timestamp.dateTime = comment.created_at;
+            timestamp.textContent = new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(comment.created_at));
+            heading.append(author, timestamp);
+            const body = document.createElement('p'); body.className = 'comment-body'; body.textContent = comment.body;
+            row.append(heading, body); commentList.append(row);
+          });
+          panel.append(commentList);
+        }
+        if (error) {
+          const message = document.createElement('p'); message.className = 'comment-message';
+          message.dataset.kind = 'error'; message.setAttribute('role', 'alert'); message.textContent = error;
+          panel.append(message);
+        }
+        const form = document.createElement('form'); form.className = 'comment-form';
+        const textarea = document.createElement('textarea'); textarea.rows = 2; textarea.maxLength = 2000;
+        textarea.placeholder = 'Scrivi un commento…'; textarea.setAttribute('aria-label', 'Nuovo commento'); textarea.required = true;
+        const submit = document.createElement('button'); submit.type = 'submit';
+        submit.textContent = submittingComments.has(task.id) ? 'Invio…' : 'Invia'; submit.disabled = submittingComments.has(task.id);
+        form.append(textarea, submit);
+        form.addEventListener('submit', event => { event.preventDefault(); addTaskComment(task.id, textarea.value); });
+        panel.append(form);
+      }
+    }
+    async function toggleTaskComments(taskId) {
+      if (openCommentTasks.has(taskId)) openCommentTasks.delete(taskId);
+      else openCommentTasks.add(taskId);
+      render();
+      if (openCommentTasks.has(taskId) && !loadingComments.has(taskId)) {
+        await loadTaskComments(taskId);
+      }
+    }
+    async function loadTaskComments(taskId) {
+      if (!currentUser) return;
+      loadingComments.add(taskId); commentErrors.delete(taskId); render();
+      try {
+        const { data, error } = await supabaseClient.from('task_comments')
+          .select('id, task_id, user_id, body, created_at')
+          .eq('task_id', taskId).order('created_at', { ascending: true });
+        if (error) throw error;
+        if (!currentUser || !tasks.some(task => task.id === taskId)) return;
+        taskComments.set(taskId, data || []);
+      } catch (error) {
+        commentErrors.set(taskId, `Impossibile caricare i commenti: ${error.message || 'controlla la connessione e le policy RLS.'}`);
+      } finally {
+        loadingComments.delete(taskId);
+        if (currentUser) render();
+      }
+    }
+    async function addTaskComment(taskId, rawBody) {
+      const body = rawBody.trim();
+      if (!currentUser || submittingComments.has(taskId)) return;
+      if (!body) {
+        commentErrors.set(taskId, 'Scrivi un commento prima di inviare.');
+        render();
+        return;
+      }
+      submittingComments.add(taskId); commentErrors.delete(taskId); render();
+      try {
+        const { data, error } = await supabaseClient.from('task_comments')
+          .insert({ task_id: taskId, user_id: currentUser.id, body })
+          .select('id, task_id, user_id, body, created_at').single();
+        if (error) throw error;
+        const comments = taskComments.get(taskId) || [];
+        taskComments.set(taskId, [...comments, data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)));
+      } catch (error) {
+        commentErrors.set(taskId, `Commento non salvato: ${error.message || 'controlla la connessione e le policy RLS.'}`);
+      } finally {
+        submittingComments.delete(taskId);
+        if (currentUser) render();
+      }
     }
     async function addTask(text, dueDate) {
       if (!currentUser) return;
@@ -259,6 +425,7 @@
         const { data, error } = await supabaseClient.from('tasks').delete().eq('id', id).select('id').maybeSingle();
         if (error) throw error;
         if (!data) throw new Error('Attività non trovata o non accessibile.');
+        taskComments.delete(id); openCommentTasks.delete(id); commentErrors.delete(id);
         await loadTasks();
       } catch (error) { setNotice(`Eliminazione non riuscita: ${error.message}`, 'error'); await loadTasks(); }
       finally { setBusy(false); }
@@ -354,7 +521,4 @@
   </script>
 </body>
 </html>
-
-
-
 
