@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lega-sanninica-shell-v1';
+const CACHE_NAME = 'lega-sanninica-shell-v2';
 const APP_BASE = new URL('./', self.location.href);
 const APP_FILES = [
   '',
