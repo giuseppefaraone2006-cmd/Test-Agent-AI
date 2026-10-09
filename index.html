@@ -8,7 +8,7 @@
   <style>
     :root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; color: #172033; background: #f3f5f9; }
     * { box-sizing: border-box; }
-    body { max-width: 760px; margin: 42px auto; padding: 0 20px; }
+    body { max-width: 1040px; margin: 42px auto; padding: 0 20px; }
     main { background: #fff; padding: clamp(20px, 5vw, 32px); border-radius: 18px; box-shadow: 0 8px 30px #17203312; }
     .brand-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
     .brand-logo-slot { position: relative; width: 82px; height: 82px; flex: 0 0 82px; overflow: hidden; border: 1px dashed #aeb8cb; border-radius: 14px; background: #f7f8fb; color: #697386; font-size: .8rem; font-weight: 700; }
@@ -29,17 +29,44 @@
     #app-panel[hidden], #auth-card[hidden], [hidden] { display: none !important; }
     #user-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #e8ebf1; padding-bottom: 14px; margin-bottom: 14px; }
     #user-email { color: #697386; overflow-wrap: anywhere; }
+    #operator-choice { max-width: 480px; margin: 24px auto 0; }
+    #operator-settings { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    #operator-settings select { min-width: 160px; }
+    #app-navigation { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0; padding-bottom: 14px; border-bottom: 1px solid #e8ebf1; }
+    #app-navigation button { background: #edf0f6; color: #283248; }
+    #app-navigation button[aria-current="page"] { background: #3157d5; color: white; }
+    .dashboard-section { margin: 24px 0 30px; }
+    .dashboard-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .metric-card { padding: 16px; border: 1px solid #e3e7ef; border-radius: 12px; background: #f7f8fb; }
+    .metric-card strong { display: block; color: #3157d5; font-size: 1.8rem; line-height: 1.2; }
+    .metric-card span { color: #697386; }
+    .dashboard-columns { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 18px; margin-top: 20px; }
+    .dashboard-columns section { min-width: 0; }
+    .dashboard-list { margin: 0; }
+    .dashboard-list li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .dashboard-task-title { font-weight: 600; overflow-wrap: anywhere; }
+    .dashboard-mention { display: grid; gap: 4px; }
+    .dashboard-mention p { margin: 0; overflow-wrap: anywhere; }
+    .dashboard-mention button { justify-self: start; margin-top: 4px; }
+    .dashboard-error { color: #8c2820; }
+    .dashboard-actions { margin: 20px 0; }
+    #task-list-heading { margin: 0; }
     #task-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
     #task-input { flex: 1 1 220px; } #operator-input { flex: 0 1 180px; } #due-input { flex: 0 1 170px; }
     ul { padding: 0; list-style: none; }
     li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 16px; padding: 14px 0; border-bottom: 1px solid #e8ebf1; }
+    #task-list > .task-row { grid-template-columns: minmax(220px, 1fr) minmax(0, auto); align-items: start; }
     .task-main { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
     .task-main input { flex: none; margin: 4px 0 0; padding: 0; }
     li label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-    .task-meta { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; }
-    .task-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+    .task-meta { grid-column: 2; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; min-width: 0; }
+    .task-meta select { max-width: 190px; }
+    .task-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
     .comments-toggle { background: #edf0f6; color: #283248; }
     .task-comments { grid-column: 1 / -1; min-width: 0; padding: 12px; border-radius: 10px; background: #f7f8fb; }
+    .task-row > .task-main, .task-row > .task-meta { grid-row: 1; }
+    .task-row > .task-main { grid-column: 1; min-width: 0; }
+    .task-row > .comments-toggle, .task-row > .task-comments { grid-column: 1 / -1; }
     .comments-list { display: grid; gap: 10px; margin: 10px 0; }
     .comment { padding: 10px; border: 1px solid #e3e7ef; border-radius: 8px; background: #fff; overflow-wrap: anywhere; }
     .comment-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; margin-bottom: 4px; }
@@ -48,6 +75,12 @@
     .comment-body { margin: 0; white-space: pre-wrap; }
     .comment-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
     .comment-form textarea { min-width: 0; resize: vertical; padding: 10px 12px; border: 1px solid #b8c0d0; border-radius: 8px; font: inherit; }
+    .comment-composer { position: relative; min-width: 0; }
+    .comment-composer textarea { width: 100%; }
+    .mention-suggestions { position: absolute; z-index: 2; right: 0; bottom: calc(100% + 4px); left: 0; display: grid; max-height: 180px; overflow: auto; padding: 4px; border: 1px solid #d9deea; border-radius: 8px; background: white; box-shadow: 0 6px 18px #17203320; }
+    .mention-suggestions button { text-align: left; background: white; color: #283248; }
+    .mention-suggestions button:hover { background: #edf0f6; }
+    .comment-mention { padding: 0 3px; border-radius: 4px; background: #e7edff; color: #2444b4; font-weight: 700; }
     .comment-message { margin: 8px 0; }
     .comment-message[data-kind="error"] { color: #8c2820; }
     li.done label { color: #697386; text-decoration: line-through; }
@@ -64,8 +97,19 @@
     #notice[data-kind="error"] { background: #fff0ef; color: #8c2820; }
     #notice[data-kind="success"] { background: #ecf8ef; color: #225e31; }
     #count { color: #697386; font-size: .92rem; }
+    @media (max-width: 700px) {
+      #task-list > .task-row { grid-template-columns: minmax(0, 1fr); }
+      .task-row > .task-main, .task-row > .task-meta { grid-column: 1; grid-row: auto; }
+      .task-row > .task-meta { justify-content: flex-start; padding-left: 30px; }
+      .task-row > .task-actions { justify-content: flex-start; padding-left: 30px; }
+      .task-row > .comments-toggle { justify-self: start; margin-left: 30px; }
+    }
     @media (max-width: 520px) {
       body { margin: 16px auto; padding: 0 12px; }
+      .dashboard-metrics { grid-template-columns: minmax(0, 1fr); }
+      .dashboard-metrics .metric-card { display: flex; align-items: center; gap: 12px; }
+      .dashboard-metrics .metric-card strong { min-width: 2ch; }
+      .dashboard-columns { grid-template-columns: minmax(0, 1fr); }
       li { grid-template-columns: minmax(0, 1fr); gap: 10px; }
       .task-meta { justify-content: flex-start; padding-left: 30px; }
       .task-actions { grid-column: 1; justify-content: flex-start; padding-left: 30px; }
@@ -108,30 +152,85 @@
       <button id="auth-mode" class="secondary" type="button">Crea un account</button>
     </section>
 
-    <section id="app-panel" hidden>
-      <div id="user-bar"><span id="user-email"></span><button id="sign-out" class="secondary" type="button">Esci</button></div>
-      <div id="import-panel" class="stack" hidden>
-        <p>Ho trovato attività salvate su questo dispositivo. Vuoi importarle nel tuo account Supabase?</p>
-        <div><button id="import-button" type="button">Importa attività</button> <button id="skip-import" class="secondary" type="button">Non ora</button></div>
-      </div>
-      <form id="task-form">
-        <input id="task-input" aria-label="Nuova attività" placeholder="Es. preparare la cena" maxlength="120" required>
-        <select id="operator-input" aria-label="Operatore" required>
-          <option value="" disabled selected>Seleziona operatore</option>
-          <option>DAVIDE</option><option>MARCO</option><option>PASQUALE</option>
-          <option>PEPPE S.</option><option>PEPPE F.</option><option>ALE</option><option>DANIELE S.</option>
-        </select>
-        <input id="due-input" type="date" aria-label="Data di scadenza facoltativa">
-        <button type="submit">Aggiungi</button>
+    <section id="operator-choice" class="stack" hidden>
+      <h2>Scegli il tuo operatore</h2>
+      <p class="muted">La scelta viene salvata sul tuo account e sarà disponibile anche sugli altri dispositivi.</p>
+      <p id="operator-choice-message" role="alert" hidden></p>
+      <button id="operator-profile-retry" class="secondary" type="button" hidden>Riprova a caricare il profilo</button>
+      <form id="operator-choice-form" class="stack">
+        <label for="operator-choice-input">Operatore</label>
+        <select id="operator-choice-input" required></select>
+        <button type="submit">Conferma operatore</button>
       </form>
-      <nav id="filters" aria-label="Filtra attività">
-        <button type="button" data-filter="all" aria-pressed="true">Tutte</button>
-        <button type="button" data-filter="todo" aria-pressed="false">Da fare</button>
-        <button type="button" data-filter="done" aria-pressed="false">Completate</button>
+    </section>
+
+    <section id="app-panel" hidden>
+      <div id="user-bar">
+        <span id="user-email"></span>
+        <div id="operator-settings">
+          <label for="profile-operator-input">Il tuo operatore</label>
+          <select id="profile-operator-input" aria-label="Cambia operatore del profilo"></select>
+          <button id="save-profile-operator" class="secondary" type="button">Salva</button>
+          <button id="sign-out" class="secondary" type="button">Esci</button>
+        </div>
+      </div>
+      <nav id="app-navigation" aria-label="Navigazione principale">
+        <button type="button" data-app-page="dashboard" aria-current="page">Dashboard</button>
+        <button type="button" data-app-page="tasks" aria-current="false">Tutte le attività</button>
       </nav>
-      <p id="count" aria-live="polite"></p>
-      <ul id="task-list"></ul>
-      <p id="empty" class="muted" hidden></p>
+      <section id="dashboard-page" class="app-page">
+        <section id="dashboard" class="dashboard-section" aria-labelledby="dashboard-title">
+          <h2 id="dashboard-title">La tua dashboard</h2>
+          <div class="dashboard-metrics">
+            <div class="metric-card"><strong id="dashboard-total">0</strong><span>Attività da fare</span></div>
+            <div class="metric-card"><strong id="dashboard-assigned">0</strong><span>Assegnate a <span id="dashboard-operator"></span></span></div>
+            <div class="metric-card"><strong id="dashboard-mentions">0</strong><span>Commenti in cui sei menzionato</span></div>
+          </div>
+          <div class="dashboard-columns">
+            <section aria-labelledby="dashboard-tasks-title">
+              <h3 id="dashboard-tasks-title">Attività da fare</h3>
+              <p id="dashboard-tasks-state" class="muted">Caricamento attività…</p>
+              <button id="dashboard-tasks-retry" class="secondary" type="button" hidden>Riprova</button>
+              <ul id="dashboard-task-list" class="dashboard-list"></ul>
+              <p id="dashboard-task-empty" class="muted" hidden>Nessuna attività da fare.</p>
+            </section>
+            <section aria-labelledby="dashboard-mentions-title">
+              <h3 id="dashboard-mentions-title">Menzioni recenti</h3>
+              <p id="dashboard-mentions-state" class="muted">Caricamento menzioni…</p>
+              <ul id="dashboard-mention-list" class="dashboard-list"></ul>
+              <button id="dashboard-mentions-retry" class="secondary" type="button" hidden>Riprova</button>
+            </section>
+          </div>
+        </section>
+        <div id="import-panel" class="stack" hidden>
+          <p>Ho trovato attività salvate su questo dispositivo. Vuoi importarle nel tuo account Supabase?</p>
+          <div><button id="import-button" type="button">Importa attività</button> <button id="skip-import" class="secondary" type="button">Non ora</button></div>
+        </div>
+        <div class="dashboard-actions">
+          <button type="button" data-open-tasks>Vai a tutte le attività</button>
+        </div>
+      </section>
+      <section id="tasks-page" class="app-page" hidden>
+        <h2 id="task-list-heading">Tutte le attività</h2>
+        <form id="task-form">
+          <input id="task-input" aria-label="Nuova attività" placeholder="Es. preparare la cena" maxlength="120" required>
+          <select id="operator-input" aria-label="Operatore" required>
+            <option value="" disabled selected>Seleziona operatore</option>
+            <option>DAVIDE</option><option>MARCO</option><option>PASQUALE</option>
+            <option>PEPPE S.</option><option>PEPPE F.</option><option>ALE</option><option>DANIELE S.</option>
+          </select>
+          <input id="due-input" type="date" aria-label="Data di scadenza facoltativa">
+          <button type="submit">Aggiungi</button>
+        </form>
+        <nav id="filters" aria-label="Filtra attività">
+          <button type="button" data-filter="all" aria-pressed="true">Tutte</button>
+          <button type="button" data-filter="todo" aria-pressed="false">Da fare</button>
+          <button type="button" data-filter="done" aria-pressed="false">Completate</button>
+        </nav>
+        <p id="count" aria-live="polite"></p>
+        <ul id="task-list"></ul>
+        <p id="empty" class="muted" hidden></p>
+      </section>
     </section>
     <p id="notice" role="status" aria-live="polite" hidden></p>
   </main>
@@ -165,6 +264,28 @@
     const list = document.querySelector('#task-list');
     const empty = document.querySelector('#empty');
     const count = document.querySelector('#count');
+    const operatorChoice = document.querySelector('#operator-choice');
+    const operatorChoiceForm = document.querySelector('#operator-choice-form');
+    const operatorChoiceInput = document.querySelector('#operator-choice-input');
+    const operatorChoiceMessage = document.querySelector('#operator-choice-message');
+    const operatorProfileRetry = document.querySelector('#operator-profile-retry');
+    const profileOperatorInput = document.querySelector('#profile-operator-input');
+    const saveProfileOperator = document.querySelector('#save-profile-operator');
+    const dashboardTotal = document.querySelector('#dashboard-total');
+    const dashboardAssigned = document.querySelector('#dashboard-assigned');
+    const dashboardOperator = document.querySelector('#dashboard-operator');
+    const dashboardMentions = document.querySelector('#dashboard-mentions');
+    const dashboardTaskList = document.querySelector('#dashboard-task-list');
+    const dashboardTaskEmpty = document.querySelector('#dashboard-task-empty');
+    const dashboardTasksState = document.querySelector('#dashboard-tasks-state');
+    const dashboardTasksRetry = document.querySelector('#dashboard-tasks-retry');
+    const dashboardMentionsState = document.querySelector('#dashboard-mentions-state');
+    const dashboardMentionList = document.querySelector('#dashboard-mention-list');
+    const dashboardMentionsRetry = document.querySelector('#dashboard-mentions-retry');
+    const dashboardPage = document.querySelector('#dashboard-page');
+    const tasksPage = document.querySelector('#tasks-page');
+    const appPageButtons = document.querySelectorAll('#app-navigation [data-app-page]');
+    const openTasksButtons = document.querySelectorAll('[data-open-tasks]');
     const filterButtons = document.querySelectorAll('#filters button');
     const leagueLogo = document.querySelector('#league-logo');
     const leagueLogoFallback = leagueLogo.nextElementSibling;
@@ -187,7 +308,24 @@
     let currentFilter = 'all';
     let isRegisterMode = false;
     let busy = false;
+    let currentOperator = null;
+    let profileRequestUserId = null;
+    let profileRequest = null;
+    let profileSaving = false;
+    let tasksLoading = false;
+    let tasksLoadError = '';
+    let dashboardMentionCount = 0;
+    let recentMentions = [];
+    let dashboardMentionsLoading = false;
+    let dashboardMentionsError = '';
     const OPERATORS = ['DAVIDE', 'MARCO', 'PASQUALE', 'PEPPE S.', 'PEPPE F.', 'ALE', 'DANIELE S.'];
+    const operatorPlaceholder = new Option('Seleziona operatore', '', true, true);
+    operatorPlaceholder.disabled = true;
+    operatorChoiceInput.add(operatorPlaceholder);
+    OPERATORS.forEach(operator => {
+      operatorChoiceInput.add(new Option(operator, operator));
+      profileOperatorInput.add(new Option(operator, operator));
+    });
 
     function setNotice(message = '', kind = 'info') {
       notice.textContent = message;
@@ -196,25 +334,150 @@
     }
     function setBusy(value) {
       busy = value;
-      document.querySelectorAll('button, input, select').forEach(control => { control.disabled = value; });
+      document.querySelectorAll('button, input, select, textarea').forEach(control => { control.disabled = value; });
+    }
+    function showAppPage(page, scrollToPage = true) {
+      if (page !== 'dashboard' && page !== 'tasks') return;
+      dashboardPage.hidden = page !== 'dashboard';
+      tasksPage.hidden = page !== 'tasks';
+      appPageButtons.forEach(button => {
+        button.setAttribute('aria-current', String(button.dataset.appPage === page));
+      });
+      if (scrollToPage && !appPanel.hidden) appPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     function showSignedOut() {
       currentUser = null;
+      currentOperator = null;
+      profileRequestUserId = null;
+      profileRequest = null;
       tasks = [];
+      tasksLoading = false;
+      tasksLoadError = '';
       taskComments = new Map();
       openCommentTasks = new Set();
       loadingComments = new Set();
       commentErrors = new Map();
       submittingComments = new Set();
+      dashboardMentionCount = 0;
+      recentMentions = [];
+      dashboardMentionsError = '';
+      dashboardMentionsLoading = false;
       appPanel.hidden = true;
+      showAppPage('dashboard');
+      operatorChoice.hidden = true;
       authCard.hidden = false;
       render();
     }
     function showSignedIn(user) {
+      if (currentUser?.id === user.id && currentOperator) {
+        currentUser = user;
+        userEmail.textContent = user.email || 'Account autenticato';
+        return;
+      }
+      if (currentUser?.id !== user.id) {
+        currentOperator = null;
+        tasks = [];
+        tasksLoading = false;
+        tasksLoadError = '';
+        taskComments = new Map();
+        openCommentTasks = new Set();
+        loadingComments = new Set();
+        commentErrors = new Map();
+        submittingComments = new Set();
+        dashboardMentionCount = 0;
+        recentMentions = [];
+        dashboardMentionsError = '';
+        dashboardMentionsLoading = false;
+      }
       currentUser = user;
       authCard.hidden = true;
-      appPanel.hidden = false;
+      appPanel.hidden = true;
+      operatorChoice.hidden = false;
+      operatorChoiceMessage.hidden = false;
+      operatorChoiceMessage.textContent = 'Verifica del profilo…';
+      operatorChoiceForm.hidden = true;
+      operatorProfileRetry.hidden = true;
       userEmail.textContent = user.email || 'Account autenticato';
+    }
+    async function loadOperatorProfile(user) {
+      operatorChoiceMessage.hidden = false;
+      operatorChoiceMessage.dataset.kind = 'info';
+      operatorChoiceMessage.textContent = 'Verifica del profilo…';
+      operatorChoiceForm.hidden = true;
+      operatorProfileRetry.hidden = true;
+      try {
+        const { data, error } = await supabaseClient.from('operator_profiles')
+          .select('operator').eq('user_id', user.id).maybeSingle();
+        if (error) throw error;
+        if (!currentUser || currentUser.id !== user.id) return;
+        if (data?.operator && OPERATORS.includes(data.operator)) {
+          activateOperator(data.operator);
+          await loadTasks();
+        } else {
+          currentOperator = null;
+          operatorChoiceMessage.hidden = true;
+          operatorChoiceForm.hidden = false;
+          operatorChoiceInput.value = '';
+        }
+      } catch (error) {
+        if (!currentUser || currentUser.id !== user.id) return;
+        operatorChoiceMessage.dataset.kind = 'error';
+        operatorChoiceMessage.textContent = `Impossibile caricare il profilo: ${error.message || 'controlla la connessione e le policy RLS.'}`;
+        operatorProfileRetry.hidden = false;
+      }
+    }
+    function ensureOperatorProfile(user) {
+      if (currentUser?.id === user.id && currentOperator) return Promise.resolve();
+      if (profileRequestUserId === user.id && profileRequest) return profileRequest;
+      profileRequestUserId = user.id;
+      profileRequest = loadOperatorProfile(user).finally(() => {
+        if (profileRequestUserId === user.id) {
+          profileRequest = null;
+          profileRequestUserId = null;
+        }
+      });
+      return profileRequest;
+    }
+    function activateOperator(operator) {
+      if (currentOperator !== operator) {
+        dashboardMentionCount = 0;
+        recentMentions = [];
+        dashboardMentionsLoading = true;
+        dashboardMentionsError = '';
+      }
+      currentOperator = operator;
+      profileOperatorInput.value = operator;
+      dashboardOperator.textContent = operator;
+      operatorChoice.hidden = true;
+      appPanel.hidden = false;
+      showAppPage('dashboard');
+      renderDashboard();
+    }
+    async function saveOperatorAssociation(operator) {
+      if (!currentUser || !OPERATORS.includes(operator) || profileSaving) return;
+      profileSaving = true;
+      operatorChoiceMessage.hidden = false;
+      operatorChoiceMessage.dataset.kind = 'info';
+      operatorChoiceMessage.textContent = 'Salvataggio della scelta…';
+      setBusy(true);
+      try {
+        const { error } = await supabaseClient.from('operator_profiles').upsert(
+          { user_id: currentUser.id, operator },
+          { onConflict: 'user_id' }
+        );
+        if (error) throw error;
+        activateOperator(operator);
+        operatorChoiceMessage.hidden = true;
+        setNotice('Operatore del profilo aggiornato.', 'success');
+        await loadTasks();
+      } catch (error) {
+        operatorChoiceMessage.dataset.kind = 'error';
+        operatorChoiceMessage.textContent = `Scelta non salvata: ${error.message || 'controlla la connessione e le policy RLS.'}`;
+        setNotice(`Scelta operatore non salvata: ${error.message || 'controlla la connessione e le policy RLS.'}`, 'error');
+      } finally {
+        profileSaving = false;
+        setBusy(false);
+      }
     }
     function localTasks() {
       try {
@@ -231,17 +494,119 @@
       const hasLocal = localTasks().length > 0;
       importPanel.hidden = !currentUser || hasMarker || !hasLocal;
     }
+    function renderDashboard() {
+      const todoTasks = tasks.filter(task => !task.done);
+      dashboardTotal.textContent = String(todoTasks.length);
+      dashboardAssigned.textContent = String(todoTasks.filter(task => task.assigned_operator === currentOperator).length);
+      dashboardOperator.textContent = currentOperator || '';
+      dashboardMentions.textContent = String(dashboardMentionCount);
+      dashboardTaskList.replaceChildren();
+      todoTasks.forEach(task => {
+        const row = document.createElement('li');
+        const title = document.createElement('span'); title.className = 'dashboard-task-title'; title.textContent = task.text;
+        const details = document.createElement('span'); details.className = 'muted';
+        const dueDate = task.due_date ? task.due_date.split('-').reverse().join('/') : 'Nessuna scadenza';
+        details.textContent = `${task.assigned_operator || 'Non assegnato'} · Scadenza: ${dueDate}`;
+        row.append(title, details); dashboardTaskList.append(row);
+      });
+      if (tasksLoading) {
+        dashboardTasksState.hidden = false;
+        dashboardTasksState.className = 'muted';
+        dashboardTasksState.textContent = 'Caricamento attività…';
+        dashboardTasksRetry.hidden = true;
+      } else if (tasksLoadError) {
+        dashboardTasksState.hidden = false;
+        dashboardTasksState.className = 'dashboard-error';
+        dashboardTasksState.textContent = tasksLoadError;
+        dashboardTasksRetry.hidden = false;
+      } else {
+        dashboardTasksState.hidden = true;
+        dashboardTasksRetry.hidden = true;
+      }
+      dashboardTaskEmpty.hidden = todoTasks.length > 0 || tasksLoading || Boolean(tasksLoadError);
+      dashboardMentionList.replaceChildren();
+      if (dashboardMentionsLoading) {
+        dashboardMentionsState.hidden = false;
+        dashboardMentionsState.className = 'muted';
+        dashboardMentionsState.textContent = 'Caricamento menzioni…';
+      } else if (dashboardMentionsError) {
+        dashboardMentionsState.hidden = false;
+        dashboardMentionsState.className = 'dashboard-error';
+        dashboardMentionsState.textContent = dashboardMentionsError;
+        dashboardMentionsRetry.hidden = false;
+      } else if (recentMentions.length === 0) {
+        dashboardMentionsState.hidden = false;
+        dashboardMentionsState.className = 'muted';
+        dashboardMentionsState.textContent = 'Non ci sono ancora menzioni.';
+        dashboardMentionsRetry.hidden = true;
+      } else {
+        dashboardMentionsState.hidden = true;
+        dashboardMentionsRetry.hidden = true;
+        recentMentions.forEach(comment => {
+          const task = tasks.find(item => item.id === comment.task_id);
+          const row = document.createElement('li'); row.className = 'dashboard-mention';
+          const body = document.createElement('p'); body.textContent = comment.body;
+          const context = document.createElement('span'); context.className = 'muted';
+          context.textContent = `${task?.text || 'Attività non disponibile'} · ${new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(comment.created_at))}`;
+          row.append(body, context);
+          if (task) {
+            const open = document.createElement('button'); open.type = 'button'; open.className = 'secondary';
+            open.textContent = 'Apri commento'; open.addEventListener('click', () => goToTask(task.id));
+            row.append(open);
+          }
+          dashboardMentionList.append(row);
+        });
+      }
+    }
+    async function loadDashboardMentions() {
+      if (!currentUser || !currentOperator) return;
+      const userId = currentUser.id;
+      const operator = currentOperator;
+      dashboardMentionsLoading = true;
+      dashboardMentionsError = '';
+      dashboardMentionsRetry.hidden = true;
+      renderDashboard();
+      try {
+        const { data, error, count } = await supabaseClient.from('task_comments')
+          .select('id, task_id, body, created_at', { count: 'exact' })
+          .contains('mentioned_operators', [operator])
+          .order('created_at', { ascending: false }).limit(5);
+        if (error) throw error;
+        if (currentUser?.id !== userId || currentOperator !== operator) return;
+        recentMentions = data || [];
+        dashboardMentionCount = count ?? recentMentions.length;
+      } catch (error) {
+        if (currentUser?.id !== userId || currentOperator !== operator) return;
+        dashboardMentionsError = `Impossibile caricare le menzioni: ${error.message || 'controlla la connessione e le policy RLS.'}`;
+      } finally {
+        if (currentUser?.id === userId && currentOperator === operator) {
+          dashboardMentionsLoading = false;
+          renderDashboard();
+        }
+      }
+    }
+    async function goToTask(taskId) {
+      showAppPage('tasks', false);
+      currentFilter = 'all';
+      filterButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === 'all')));
+      openCommentTasks.add(taskId);
+      render();
+      if (!taskComments.has(taskId)) await loadTaskComments(taskId);
+      document.querySelector(`#task-${taskId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     function render() {
+      renderDashboard();
       list.replaceChildren();
       const visibleTasks = tasks.filter(task => currentFilter === 'all'
         || (currentFilter === 'todo' && !task.done)
         || (currentFilter === 'done' && task.done));
       visibleTasks.forEach(task => {
         const item = document.createElement('li');
+        item.id = `task-${task.id}`;
         const now = new Date();
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         const overdue = Boolean(task.due_date && !task.done && task.due_date < today);
-        item.className = [task.done ? 'done' : '', overdue ? 'overdue' : ''].filter(Boolean).join(' ');
+        item.className = ['task-row', task.done ? 'done' : '', overdue ? 'overdue' : ''].filter(Boolean).join(' ');
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox'; checkbox.checked = task.done;
         checkbox.setAttribute('aria-label', task.done ? `Segna ${task.text} come da fare` : `Segna ${task.text} come completata`);
@@ -291,15 +656,85 @@
     }
     async function loadTasks() {
       if (!currentUser) return;
+      tasksLoading = true;
+      tasksLoadError = '';
+      renderDashboard();
       setBusy(true); setNotice('Caricamento delle attività…');
       try {
         const { data, error } = await supabaseClient.from('tasks').select('id, text, done, due_date, assigned_operator, created_at').order('created_at', { ascending: false });
         if (error) throw error;
         tasks = data || [];
-        render(); updateImportPrompt(); setNotice('');
+        render(); updateImportPrompt(); await loadDashboardMentions(); setNotice('');
       } catch (error) {
-        setNotice(`Impossibile caricare le attività: ${error.message || 'controlla la connessione e le policy RLS.'}`, 'error');
-      } finally { setBusy(false); }
+        tasksLoadError = `Impossibile caricare le attività: ${error.message || 'controlla la connessione e le policy RLS.'}`;
+        setNotice(tasksLoadError, 'error');
+        await loadDashboardMentions();
+      } finally {
+        tasksLoading = false;
+        renderDashboard();
+        setBusy(false);
+      }
+    }
+    function renderCommentBody(comment, body) {
+      const mentions = Array.isArray(comment.mentioned_operators)
+        ? comment.mentioned_operators.filter(operator => OPERATORS.includes(operator))
+        : [];
+      if (mentions.length === 0) {
+        body.textContent = comment.body;
+        return;
+      }
+      let offset = 0;
+      while (offset < comment.body.length) {
+        let nextIndex = -1;
+        let nextOperator = '';
+        mentions.forEach(operator => {
+          const index = comment.body.indexOf(`@${operator}`, offset);
+          if (index !== -1 && (nextIndex === -1 || index < nextIndex)) {
+            nextIndex = index;
+            nextOperator = operator;
+          }
+        });
+        if (nextIndex === -1) {
+          body.append(document.createTextNode(comment.body.slice(offset)));
+          break;
+        }
+        body.append(document.createTextNode(comment.body.slice(offset, nextIndex)));
+        const mention = document.createElement('span'); mention.className = 'comment-mention';
+        mention.textContent = `@${nextOperator}`; body.append(mention);
+        offset = nextIndex + nextOperator.length + 1;
+      }
+    }
+    function updateMentionSuggestions(textarea, suggestions) {
+      const prefix = textarea.value.slice(0, textarea.selectionStart);
+      const match = prefix.match(/(^|\s)@([A-Z .]*)$/i);
+      suggestions.replaceChildren();
+      if (!match) {
+        suggestions.hidden = true;
+        return;
+      }
+      const query = match[2].trim().toUpperCase();
+      const options = OPERATORS.filter(operator => operator.startsWith(query));
+      if (options.length === 0) {
+        suggestions.hidden = true;
+        return;
+      }
+      options.forEach(operator => {
+        const option = document.createElement('button'); option.type = 'button';
+        option.setAttribute('role', 'option'); option.textContent = `@${operator}`;
+        option.addEventListener('pointerdown', event => event.preventDefault());
+        option.addEventListener('click', () => {
+          const currentPrefix = textarea.value.slice(0, textarea.selectionStart);
+          const currentMatch = currentPrefix.match(/(^|\s)@([A-Z .]*)$/i);
+          if (!currentMatch) return;
+          const start = textarea.selectionStart - currentMatch[0].length;
+          textarea.setRangeText(`${currentMatch[1]}@${operator} `, start, textarea.selectionStart, 'end');
+          textarea.focus();
+          textarea.dispatchEvent(new CustomEvent('operator-mention-selected', { detail: operator }));
+          suggestions.hidden = true;
+        });
+        suggestions.append(option);
+      });
+      suggestions.hidden = false;
     }
     function renderTaskComments(task, panel) {
       panel.replaceChildren();
@@ -329,7 +764,8 @@
             timestamp.dateTime = comment.created_at;
             timestamp.textContent = new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(comment.created_at));
             heading.append(author, timestamp);
-            const body = document.createElement('p'); body.className = 'comment-body'; body.textContent = comment.body;
+            const body = document.createElement('p'); body.className = 'comment-body';
+            renderCommentBody(comment, body);
             row.append(heading, body); commentList.append(row);
           });
           panel.append(commentList);
@@ -340,12 +776,24 @@
           panel.append(message);
         }
         const form = document.createElement('form'); form.className = 'comment-form';
+        const composer = document.createElement('div'); composer.className = 'comment-composer';
         const textarea = document.createElement('textarea'); textarea.rows = 2; textarea.maxLength = 2000;
         textarea.placeholder = 'Scrivi un commento…'; textarea.setAttribute('aria-label', 'Nuovo commento'); textarea.required = true;
+        const suggestions = document.createElement('div'); suggestions.className = 'mention-suggestions';
+        suggestions.setAttribute('role', 'listbox'); suggestions.setAttribute('aria-label', 'Operatori da menzionare');
+        suggestions.hidden = true;
+        const selectedMentions = new Set();
+        textarea.addEventListener('input', () => updateMentionSuggestions(textarea, suggestions));
+        textarea.addEventListener('operator-mention-selected', event => selectedMentions.add(event.detail));
         const submit = document.createElement('button'); submit.type = 'submit';
         submit.textContent = submittingComments.has(task.id) ? 'Invio…' : 'Invia'; submit.disabled = submittingComments.has(task.id);
-        form.append(textarea, submit);
-        form.addEventListener('submit', event => { event.preventDefault(); addTaskComment(task.id, textarea.value); });
+        composer.append(textarea, suggestions);
+        form.append(composer, submit);
+        form.addEventListener('submit', event => {
+          event.preventDefault();
+          const mentions = [...selectedMentions].filter(operator => textarea.value.includes(`@${operator}`));
+          addTaskComment(task.id, textarea.value, mentions);
+        });
         panel.append(form);
       }
     }
@@ -362,7 +810,7 @@
       loadingComments.add(taskId); commentErrors.delete(taskId); render();
       try {
         const { data, error } = await supabaseClient.from('task_comments')
-          .select('id, task_id, user_id, body, created_at')
+          .select('id, task_id, user_id, body, mentioned_operators, created_at')
           .eq('task_id', taskId).order('created_at', { ascending: true });
         if (error) throw error;
         if (!currentUser || !tasks.some(task => task.id === taskId)) return;
@@ -374,7 +822,7 @@
         if (currentUser) render();
       }
     }
-    async function addTaskComment(taskId, rawBody) {
+    async function addTaskComment(taskId, rawBody, mentionedOperators) {
       const body = rawBody.trim();
       if (!currentUser || submittingComments.has(taskId)) return;
       if (!body) {
@@ -385,11 +833,15 @@
       submittingComments.add(taskId); commentErrors.delete(taskId); render();
       try {
         const { data, error } = await supabaseClient.from('task_comments')
-          .insert({ task_id: taskId, user_id: currentUser.id, body })
-          .select('id, task_id, user_id, body, created_at').single();
+          .insert({
+            task_id: taskId, user_id: currentUser.id, body,
+            mentioned_operators: [...new Set(mentionedOperators)].filter(operator => OPERATORS.includes(operator))
+          })
+          .select('id, task_id, user_id, body, mentioned_operators, created_at').single();
         if (error) throw error;
         const comments = taskComments.get(taskId) || [];
         taskComments.set(taskId, [...comments, data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)));
+        await loadDashboardMentions();
       } catch (error) {
         commentErrors.set(taskId, `Commento non salvato: ${error.message || 'controlla la connessione e le policy RLS.'}`);
       } finally {
@@ -486,7 +938,7 @@
         if (isRegisterMode && !result.data.session) {
           setNotice('Account creato. Controlla la tua email per confermare l’indirizzo, poi accedi.', 'success');
         } else if (result.data.user) {
-          showSignedIn(result.data.user); await loadTasks();
+          showSignedIn(result.data.user); await ensureOperatorProfile(result.data.user);
         }
       } catch (error) { setNotice(`Accesso non riuscito: ${error.message}`, 'error'); }
       finally { setBusy(false); }
@@ -499,6 +951,18 @@
     });
     importButton.addEventListener('click', importLocalTasks);
     skipImport.addEventListener('click', () => { importPanel.hidden = true; setNotice('Importazione rimandata: potrai ricaricare la pagina per visualizzare di nuovo la proposta.'); });
+    operatorChoiceForm.addEventListener('submit', event => {
+      event.preventDefault();
+      saveOperatorAssociation(operatorChoiceInput.value);
+    });
+    saveProfileOperator.addEventListener('click', () => saveOperatorAssociation(profileOperatorInput.value));
+    operatorProfileRetry.addEventListener('click', () => {
+      if (currentUser) ensureOperatorProfile(currentUser);
+    });
+    dashboardMentionsRetry.addEventListener('click', loadDashboardMentions);
+    dashboardTasksRetry.addEventListener('click', loadTasks);
+    appPageButtons.forEach(button => button.addEventListener('click', () => showAppPage(button.dataset.appPage)));
+    openTasksButtons.forEach(button => button.addEventListener('click', () => showAppPage('tasks')));
 
     if (SUPABASE_URL.startsWith('INSERISCI_') || SUPABASE_PUBLISHABLE_KEY.startsWith('INSERISCI_')) {
       setupCard.hidden = false; setupMessage.textContent = 'Configurazione Supabase mancante: inserisci i valori del tuo progetto per attivare accesso e sincronizzazione.';
@@ -509,16 +973,15 @@
     } else {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
       supabaseClient.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) { showSignedIn(session.user); queueMicrotask(loadTasks); }
+        if (session?.user) { showSignedIn(session.user); queueMicrotask(() => ensureOperatorProfile(session.user)); }
         else showSignedOut();
       });
       supabaseClient.auth.getSession().then(({ data, error }) => {
         if (error) { setNotice(`Verifica sessione non riuscita: ${error.message}`, 'error'); showSignedOut(); return; }
-        if (data.session?.user) { showSignedIn(data.session.user); loadTasks(); }
+        if (data.session?.user) { showSignedIn(data.session.user); ensureOperatorProfile(data.session.user); }
         else showSignedOut();
       });
     }
   </script>
 </body>
 </html>
-

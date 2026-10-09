@@ -13,20 +13,12 @@ alter table public.tasks
     assigned_operator is null or assigned_operator in ('DAVIDE', 'MARCO', 'PASQUALE', 'PEPPE S.', 'PEPPE F.', 'ALE', 'DANIELE S.')
   );
 
--- Rimuove tutte le policy esistenti, incluse quelle che filtravano per user_id.
-do $$
-declare
-  existing_policy text;
-begin
-  for existing_policy in
-    select policyname from pg_policies where schemaname = 'public' and tablename = 'tasks'
-  loop
-    execute format('drop policy if exists %I on public.tasks', existing_policy);
-  end loop;
-end $$;
-
 alter table public.tasks enable row level security;
 
+drop policy if exists "Authenticated users can read shared tasks" on public.tasks;
+drop policy if exists "Authenticated users can create shared tasks" on public.tasks;
+drop policy if exists "Authenticated users can update shared tasks" on public.tasks;
+drop policy if exists "Authenticated users can delete shared tasks" on public.tasks;
 create policy "Authenticated users can read shared tasks"
   on public.tasks for select to authenticated using (true);
 create policy "Authenticated users can create shared tasks"
@@ -45,22 +37,41 @@ create table if not exists public.task_comments (
   task_id uuid not null references public.tasks (id) on delete cascade,
   user_id uuid not null references auth.users (id) on delete cascade,
   body text not null check (char_length(btrim(body)) between 1 and 2000),
+  mentioned_operators text[] not null default '{}',
   created_at timestamptz not null default now()
 );
 
+alter table public.task_comments
+  add column if not exists mentioned_operators text[] not null default '{}';
+update public.task_comments set mentioned_operators = '{}' where mentioned_operators is null;
+alter table public.task_comments alter column mentioned_operators set default '{}';
+alter table public.task_comments alter column mentioned_operators set not null;
+
+create or replace function public.task_comment_mentions_are_valid(mentioned text[])
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select mentioned is not null
+    and array_position(mentioned, null) is null
+    and mentioned <@ array['DAVIDE', 'MARCO', 'PASQUALE', 'PEPPE S.', 'PEPPE F.', 'ALE', 'DANIELE S.']::text[]
+    and cardinality(mentioned) = (
+      select count(distinct operator_name)::integer
+      from unnest(mentioned) as operators(operator_name)
+    );
+$$;
+
+alter table public.task_comments
+  drop constraint if exists task_comments_mentioned_operators_allowed;
+alter table public.task_comments
+  add constraint task_comments_mentioned_operators_allowed
+  check (public.task_comment_mentions_are_valid(mentioned_operators));
+
 alter table public.task_comments enable row level security;
 
-do $$
-declare
-  existing_policy text;
-begin
-  for existing_policy in
-    select policyname from pg_policies where schemaname = 'public' and tablename = 'task_comments'
-  loop
-    execute format('drop policy if exists %I on public.task_comments', existing_policy);
-  end loop;
-end $$;
-
+drop policy if exists "Authenticated users can read comments on visible tasks" on public.task_comments;
+drop policy if exists "Authenticated users can add comments to visible tasks" on public.task_comments;
 create policy "Authenticated users can read comments on visible tasks"
   on public.task_comments for select to authenticated
   using (exists (select 1 from public.tasks t where t.id = task_comments.task_id));
@@ -71,15 +82,53 @@ create policy "Authenticated users can add comments to visible tasks"
     and exists (select 1 from public.tasks t where t.id = task_comments.task_id)
   );
 
+create table if not exists public.operator_profiles (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  operator text not null check (
+    operator in ('DAVIDE', 'MARCO', 'PASQUALE', 'PEPPE S.', 'PEPPE F.', 'ALE', 'DANIELE S.')
+  ),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.operator_profiles enable row level security;
+do $$
+declare
+  existing_policy text;
+begin
+  for existing_policy in
+    select policyname from pg_policies
+    where schemaname = 'public' and tablename = 'operator_profiles'
+  loop
+    execute format('drop policy if exists %I on public.operator_profiles', existing_policy);
+  end loop;
+end $$;
+
+create policy "Users can read their own operator profile"
+  on public.operator_profiles for select to authenticated
+  using ((select auth.uid()) = user_id);
+create policy "Users can create their own operator profile"
+  on public.operator_profiles for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+create policy "Users can update their own operator profile"
+  on public.operator_profiles for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
 revoke all on table public.tasks from public, anon;
 grant select, insert, update, delete on table public.tasks to authenticated;
-revoke all on table public.task_comments from public, anon;
+revoke all on table public.task_comments from public, anon, authenticated;
 grant select, insert on table public.task_comments to authenticated;
+revoke all on table public.operator_profiles from public, anon, authenticated;
+grant select, insert, update on table public.operator_profiles to authenticated;
 
 create index if not exists tasks_created_at_idx
   on public.tasks (created_at desc);
 create index if not exists task_comments_task_created_idx
   on public.task_comments (task_id, created_at asc);
+create index if not exists task_comments_mentioned_operators_idx
+  on public.task_comments using gin (mentioned_operators);
+create index if not exists tasks_todo_operator_idx
+  on public.tasks (assigned_operator) where done = false;
 
 -- L'operatore scelto non si può cambiare; permette solo la prima assegnazione
 -- alle attività storiche che sono ancora senza operatore.
