@@ -90,6 +90,30 @@ create table if not exists public.operator_profiles (
   updated_at timestamptz not null default now()
 );
 
+do $$
+declare
+  duplicate_profiles text;
+begin
+  select string_agg(
+    format('%s (%s account)', operator, profile_count),
+    ', ' order by operator
+  )
+  into duplicate_profiles
+  from (
+    select operator, count(*) as profile_count
+    from public.operator_profiles
+    group by operator
+    having count(*) > 1
+  ) duplicates;
+
+  if duplicate_profiles is not null then
+    raise exception 'Cannot make operator_profiles.operator unique: existing duplicates: %. Resolve these profiles before rerunning this script; no profiles were changed.', duplicate_profiles;
+  end if;
+end $$;
+
+create unique index if not exists operator_profiles_operator_unique_idx
+  on public.operator_profiles (operator);
+
 alter table public.operator_profiles enable row level security;
 do $$
 declare
@@ -120,6 +144,32 @@ revoke all on table public.task_comments from public, anon, authenticated;
 grant select, insert on table public.task_comments to authenticated;
 revoke all on table public.operator_profiles from public, anon, authenticated;
 grant select, insert, update on table public.operator_profiles to authenticated;
+
+create or replace function public.available_operators()
+returns table (operator text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select candidate.operator
+  from unnest(array['DAVIDE', 'MARCO', 'PASQUALE', 'PEPPE S.', 'PEPPE F.', 'ALE', 'DANIELE S.']::text[])
+    as candidate(operator)
+  where auth.uid() is not null
+    and not exists (
+      select 1
+      from public.operator_profiles profile
+      where profile.operator = candidate.operator
+        and profile.user_id <> (select auth.uid())
+    )
+  order by array_position(
+    array['DAVIDE', 'MARCO', 'PASQUALE', 'PEPPE S.', 'PEPPE F.', 'ALE', 'DANIELE S.']::text[],
+    candidate.operator
+  );
+$$;
+
+revoke all on function public.available_operators() from public, anon;
+grant execute on function public.available_operators() to authenticated;
 
 create index if not exists tasks_created_at_idx
   on public.tasks (created_at desc);

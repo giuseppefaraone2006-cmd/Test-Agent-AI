@@ -83,7 +83,26 @@ La migrazione è ripetibile e conserva i dati; sostituisce solo le policy applic
 
 ## Profilo operatore e dashboard
 
-Dopo l’accesso, se manca `operator_profiles` per l’account, l’app mostra la scelta obbligatoria tra gli operatori configurati (incluso `DANIELE S.`). La scelta viene salvata su Supabase, non nel browser, quindi lo stesso account mantiene il profilo su altri dispositivi. Dalla barra utente è possibile vedere e cambiare l’operatore associato. La dashboard mostra le attività aperte totali, quelle assegnate all’operatore del profilo, il conteggio dei commenti che lo menzionano e le menzioni più recenti. La lista completa delle attività è in una vista separata, raggiungibile dalla navigazione principale.
+Dopo l’accesso, se manca `operator_profiles` per l’account, l’app mostra la scelta obbligatoria tra gli operatori ancora liberi (incluso `DANIELE S.`). Ogni operatore può appartenere a un solo account: un indice univoco Supabase applica la regola anche quando due account scelgono contemporaneamente lo stesso nome. La funzione `available_operators()` mostra solo i nomi disponibili, senza esporre gli account associati. Lo stesso account può cambiare operatore scegliendone uno libero; la scelta viene salvata su Supabase, non nel browser.
+
+Per un progetto esistente, prima della pubblicazione esegui la versione aggiornata di `supabase-migration-global-tasks.sql` nel SQL Editor. Lo script si interrompe, senza modificare i profili esistenti, se trova operatori assegnati a più account: controlla quali account sono coinvolti con
+
+```sql
+select operator, count(*) as accounts, array_agg(user_id order by user_id) as user_ids
+from public.operator_profiles
+group by operator
+having count(*) > 1;
+```
+
+Dopo aver concordato quale operatore assegnare a ogni account interessato, correggi soltanto le righe duplicate indicando esplicitamente il rispettivo `user_id`, quindi riesegui lo script. Per esempio:
+
+```sql
+update public.operator_profiles
+set operator = 'MARCO'
+where user_id = '<UUID-account-da-assegnare-a-MARCO>';
+```
+
+Scegli un nome effettivamente libero e sostituisci il segnaposto con l’UUID corretto; non cancellare profili per risolvere i duplicati. Solo dopo questa verifica la migrazione crea il vincolo univoco e la funzione usata dall’interfaccia. La dashboard mostra le attività aperte totali, quelle assegnate all’operatore del profilo, il conteggio dei commenti che lo menzionano e le menzioni più recenti. La lista completa delle attività è in una vista separata, raggiungibile dalla navigazione principale.
 
 Le menzioni vengono salvate nell’array `task_comments.mentioned_operators`, non ricavate cercando `@` nel testo. Nel compositore dei commenti digita `@` e scegli un operatore dal menu. Le vecchie righe ricevono l’array vuoto e continuano a essere visualizzate.
 
@@ -109,3 +128,12 @@ La publishable key è visibile nel frontend; RLS e i privilegi SQL sono quindi e
 ## Immutabilità operatore
 
 Per un progetto già esistente, esegui nuovamente `supabase-migration-global-tasks.sql`: installa il trigger che impedisce di cambiare un operatore già assegnato. Le attività storiche senza operatore possono ricevere un’assegnazione iniziale; dopo quella scelta, l’operatore non è più modificabile.
+
+## Installazione su telefono (PWA)
+
+L’app pubblicata su GitHub Pages include un manifest, icone e un service worker. I percorsi sono relativi alla pagina, quindi funzionano anche con l’URL del progetto sotto `/Test-Agent-AI/`. Il service worker precarica soltanto i file statici dell’interfaccia elencati in `sw.js`; non memorizza sessioni, credenziali o dati Supabase e non intercetta richieste verso Supabase.
+
+Per pubblicare un aggiornamento, invia i file modificati al branch o alla cartella configurati in **Settings → Pages** e attendi che GitHub Pages completi la distribuzione. Quando cambi i file statici precacheati, incrementa anche la versione `CACHE_NAME` in `sw.js`. Dopo la distribuzione, riapri o ricarica l’app mentre sei online per ricevere la nuova versione.
+
+- **iPhone/iPad:** apri l’URL HTTPS di GitHub Pages in Safari, tocca **Condividi → Aggiungi alla schermata Home**, poi conferma con **Aggiungi**.
+- **Android:** apri lo stesso URL in Chrome, apri il menu ⋮ e scegli **Installa app** o **Aggiungi a schermata Home**.
